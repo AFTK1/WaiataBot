@@ -1,27 +1,46 @@
-const Discord = require("discord.js")
-require("dotenv").config()
+const fs = require('node:fs');
+const { Client, Collection, Intents } = require('discord.js');
+const { token } = require('./config.json');
+const { Player } = require("discord-player");
 
-const client = new Discord.Client({
-    intents: [
-        "GUILDS",
-        "GUILD_MESSAGES",
-        "GUILD_MEMBERS"
-    ]
-})
 
-client.on("ready", () => {
-    console.log(`Logged in as ${client.user.tag}`)
-})
+const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_VOICE_STATES] });
 
-client.on("messageCreate", (message) => {
-    if(message.content == "hi"){
-        message.reply("hello!")
+client.commands = new Collection();
+const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
+for (const file of commandFiles) {
+	const command = require(`./commands/${file}`);
+	client.commands.set(command.data.name, command);
+}
+
+client.player = new Player(client, {
+    ytdlOptions: {
+        quality: "highestaudio",
+        highWaterMark: 1 << 25
     }
 })
 
-const welcomeChannelID = "973614788741591090"
+client.once('ready', () => {
+	console.log('Ready!');
+});
 
-client.on("guildMemberAdd", (member) => {
-    member.guild.channels.cache.get(welcomeChannelID).send(`<@${member.id}> Welcome to the server`)
-})
-client.login(process.env.TOKEN)
+client.on('interactionCreate', async interaction => {
+	if (!interaction.isCommand()) return;
+
+	const command = client.commands.get(interaction.commandName);
+
+	if (!command) return;
+
+    //console.log("debugging..." + command);
+
+	try {
+        await interaction.deferReply();
+		await command.run({client, interaction});
+        
+	} catch (error) {
+		console.error(error);
+		await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+	}
+});
+
+client.login(token);
