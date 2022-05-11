@@ -6,6 +6,7 @@ const { Player } = require("discord-player");
 
 const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_VOICE_STATES] });
 
+//loop through command files to know what are acceptable commands
 client.commands = new Collection();
 const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
 for (const file of commandFiles) {
@@ -13,6 +14,7 @@ for (const file of commandFiles) {
 	client.commands.set(command.data.name, command);
 }
 
+//setup player to manage songs played
 client.player = new Player(client, {
     ytdlOptions: {
         quality: "highestaudio",
@@ -24,8 +26,13 @@ client.once('ready', () => {
 	console.log('Ready!');
 });
 
+//handler for when an interaction is made, checking if command was made or if button was clicked
 client.on('interactionCreate', async interaction => {
-	if (!interaction.isCommand()) return;
+	if (!interaction.isCommand() && !interaction.isButton()) return;
+
+    if(interaction.isButton()){
+        console.log(interaction.customId);
+    }
 
 	const command = client.commands.get(interaction.commandName);
 

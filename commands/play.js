@@ -1,5 +1,5 @@
 const { SlashCommandBuilder } = require("@discordjs/builders")
-const { MessageEmbed } = require("discord.js")
+const { MessageEmbed, MessageActionRow, MessageButton } = require("discord.js")
 const { QueryType } = require("discord-player")
 const { execute } = require("./ping")
 
@@ -39,7 +39,8 @@ module.exports = {
 			await queue.connect(interaction.member.voice.channel)
 		}
 
-		let embed = new MessageEmbed()
+		let embed = new MessageEmbed();
+		const row = new MessageActionRow();
 
 		if (interaction.options.getSubcommand() === "song") {
 			let url = interaction.options.getString("url")
@@ -92,10 +93,27 @@ module.exports = {
 				.setDescription(`**[${song.title}](${song.url})** has been added to the Queue`)
 				.setThumbnail(song.thumbnail)
 				.setFooter({ text: `Duration: ${song.duration}` })
+
+			row
+				.addComponents(
+					new MessageButton()
+						.setCustomId('skip')
+						.setLabel('Skip')
+						.setStyle('PRIMARY'),
+					new MessageButton()
+						.setCustomId('pause')
+						.setLabel('Pause')
+						.setStyle('PRIMARY'),
+					new MessageButton()
+						.setCustomId('resume')
+						.setLabel('Resume')
+						.setStyle('PRIMARY'),
+				);
 		}
 		if (!queue.playing) await queue.play()
 		await interaction.editReply({
-			embeds: [embed]
+			embeds: [embed],
+			components: [row]
 		})
 	}
 }
