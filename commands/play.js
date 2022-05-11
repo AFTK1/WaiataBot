@@ -34,6 +34,7 @@ module.exports = {
 		}
 
 		const queue = await client.player.createQueue(interaction.guild)
+
 		if (!queue.connection) {
 			await queue.connect(interaction.member.voice.channel)
 		}
